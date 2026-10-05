@@ -1,5 +1,5 @@
-import { apcaContrast, wcagContrast } from './color';
-import { ACCENT_SLOTS, BRIGHT_SLOTS, type Lang, type Palette, type Slot, type System } from './scheme';
+import { apcaContrast, hexToOklch, hexToRgb, rgbToOklab, wcagContrast } from './color';
+import { ACCENT_SLOTS, BRIGHT_OF, BRIGHT_SLOTS, type Lang, type Palette, type Slot, type System } from './scheme';
 
 export type PairKind = 'text' | 'subtle';
 
@@ -68,4 +68,56 @@ export function livePairs(slot: Slot, system: System): { fg: Slot; bg: Slot; kin
   return BG_SLOTS.includes(slot)
     ? [{ fg: 'base05', bg: slot, kind: 'text' }]
     : [{ fg: slot, bg: 'base00', kind: 'text' }];
+}
+
+// ---------- distinguishability between accents ----------
+
+/** ΔE in OKLab (×100 for readability). ~2 is a just-noticeable difference. */
+export function deltaE(a: string, b: string): number {
+  const x = rgbToOklab(hexToRgb(a));
+  const y = rgbToOklab(hexToRgb(b));
+  return Math.hypot(x.l - y.l, x.a - y.a, x.b - y.b) * 100;
+}
+
+/** Below `bad` two syntax colors are easily confused; below `warn` they are close. */
+export const DELTA_E = { bad: 8, warn: 12 };
+export type Distinct = 'ok' | 'warn' | 'bad';
+export const distinctLevel = (d: number): Distinct =>
+  d < DELTA_E.bad ? 'bad' : d < DELTA_E.warn ? 'warn' : 'ok';
+
+/** Colors that sit side by side as syntax / terminal colors and must be told apart. */
+export function distinctSlots(system: System): Slot[] {
+  return system === 'base24' ? [...ACCENT_SLOTS, ...BRIGHT_SLOTS] : ACCENT_SLOTS;
+}
+
+export interface DistinctPair { a: Slot; b: Slot; de: number; dh: number; level: Distinct; }
+
+export function distinctPairs(p: Palette, system: System): DistinctPair[] {
+  const slots = distinctSlots(system);
+  const out: DistinctPair[] = [];
+  for (let i = 0; i < slots.length; i++) {
+    for (let j = i + 1; j < slots.length; j++) {
+      const a = slots[i], b = slots[j];
+      // A bright variant is meant to resemble its base color.
+      if (BRIGHT_OF[a] === b || BRIGHT_OF[b] === a) continue;
+      const de = deltaE(p[a], p[b]);
+      const ha = hexToOklch(p[a]).h, hb = hexToOklch(p[b]).h;
+      const dh = Math.abs(((hb - ha + 540) % 360) - 180);
+      out.push({ a, b, de, dh, level: distinctLevel(de) });
+    }
+  }
+  return out.sort((x, y) => x.de - y.de);
+}
+
+/** Nearest other distinct-slot color to `slot`, for the live readout in the picker. */
+export function nearest(p: Palette, slot: Slot, system: System): { slot: Slot; de: number } | null {
+  const slots = distinctSlots(system);
+  if (!slots.includes(slot)) return null;
+  let best: { slot: Slot; de: number } | null = null;
+  for (const s of slots) {
+    if (s === slot || BRIGHT_OF[s] === slot || BRIGHT_OF[slot] === s) continue;
+    const de = deltaE(p[slot], p[s]);
+    if (!best || de < best.de) best = { slot: s, de };
+  }
+  return best;
 }

@@ -21,11 +21,11 @@
     {#if label}<div class="muted small ellipsis">{label}</div>{/if}
   </div>
   <div class="metric">
-    <span class="mono">{r.wcag.toFixed(2)}</span>
+    <span class="mono">{(Math.trunc(r.wcag * 100) / 100).toFixed(2)}</span>
     <span class="badge {r.passWcag ? 'ok' : 'bad'}">{r.passWcag ? (r.wcag >= 7 ? 'AAA' : 'AA') : 'NG'}</span>
   </div>
   <div class="metric">
-    <span class="mono">Lc {Math.abs(r.apca).toFixed(0)}</span>
+    <span class="mono">Lc {Math.trunc(Math.abs(r.apca))}</span>
     <span class="badge {r.passApca ? 'ok' : 'bad'}">{r.passApca ? 'OK' : 'NG'}</span>
   </div>
 </div>

@@ -38,3 +38,22 @@ describe('color', () => {
     expect(apcaContrast('#000000', '#aaaaaa')).toBeCloseTo(58.15, 1);
   });
 });
+
+import { deltaE, distinctPairs } from './contrast';
+import { presetTheme } from './presets';
+
+describe('distinguishability', () => {
+  it('measures OKLab distance', () => {
+    expect(deltaE('#ff0000', '#ff0000')).toBe(0);
+    expect(deltaE('#000000', '#ffffff')).toBeCloseTo(100, 0);
+  });
+
+  it('flags near-identical accents and skips bright/base pairs', () => {
+    const t = presetTheme(7); // base24
+    t.palette.base0C = '#80bff0'; // nearly base0D
+    const pairs = distinctPairs(t.palette, 'base24');
+    expect(pairs[0].level).toBe('bad');
+    expect([pairs[0].a, pairs[0].b].sort()).toEqual(['base0C', 'base0D']);
+    expect(pairs.some((x) => x.a === 'base08' && x.b === 'base12')).toBe(false);
+  });
+});
