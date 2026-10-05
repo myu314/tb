@@ -40,7 +40,8 @@ describe('color', () => {
 });
 
 import { deltaE, distinctPairs } from './contrast';
-import { presetTheme } from './presets';
+import data from '../data/schemes.json';
+import { entryTheme, type SchemeData } from './presets';
 
 describe('distinguishability', () => {
   it('measures OKLab distance', () => {
@@ -49,8 +50,8 @@ describe('distinguishability', () => {
   });
 
   it('flags near-identical accents and skips bright/base pairs', () => {
-    const t = presetTheme(7); // base24
-    t.palette.base0C = '#80bff0'; // nearly base0D
+    const t = entryTheme((data as SchemeData).schemes.find((e) => e.system === 'base24' && e.slug === 'dracula')!);
+    t.palette.base0C = t.palette.base0D; // identical to base0D
     const pairs = distinctPairs(t.palette, 'base24');
     expect(pairs[0].level).toBe('bad');
     expect([pairs[0].a, pairs[0].b].sort()).toEqual(['base0C', 'base0D']);

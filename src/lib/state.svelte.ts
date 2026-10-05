@@ -1,8 +1,9 @@
 import { decodeShare } from './io';
-import { presetTheme } from './presets';
-import { deriveBase24, newId, type Lang, type Palette, type Slot, type Theme } from './scheme';
+import { DEFAULT_ENTRY, themeFromEntry } from './presets';
+import { ALL_SLOTS, deriveBase24, newId, type Lang, type Palette, type Slot, type Theme } from './scheme';
 
 const STORAGE_KEY = 'theme-bench:v1';
+const REF_KEY = 'theme-bench:reference';
 const HISTORY_LIMIT = 200;
 
 interface Persisted {
@@ -11,13 +12,24 @@ interface Persisted {
   lang: Lang;
 }
 
+/** Guards against corrupted or outdated storage so a bad entry can't break startup. */
+function isTheme(t: unknown): t is Theme {
+  const x = t as Theme;
+  return (
+    !!x && typeof x === 'object' && typeof x.id === 'string' && typeof x.name === 'string' &&
+    (x.system === 'base16' || x.system === 'base24') && (x.variant === 'dark' || x.variant === 'light') &&
+    !!x.palette && ALL_SLOTS.every((s) => /^#[0-9a-f]{6}$/i.test(x.palette[s] ?? ''))
+  );
+}
+
 function load(): Persisted | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw) as Persisted;
-    if (!Array.isArray(data.themes) || data.themes.length === 0) return null;
-    return data;
+    if (!Array.isArray(data.themes)) return null;
+    data.themes = data.themes.filter(isTheme);
+    return data.themes.length ? data : null;
   } catch {
     return null;
   }
@@ -30,6 +42,8 @@ class AppState {
   currentId = $state('');
   selected = $state<Slot>('base00');
   lang = $state<Lang>('ja');
+  /** A published scheme shown next to the current theme for comparison. */
+  reference = $state<Theme | null>(null);
 
   // Undo history per theme id; snapshots are whole themes.
   #past = $state<Record<string, Theme[]>>({});
@@ -44,12 +58,25 @@ class AppState {
       this.currentId = saved.themes.some((t) => t.id === saved.currentId) ? saved.currentId : saved.themes[0].id;
       this.lang = saved.lang ?? 'ja';
     } else {
-      const t = presetTheme(0);
+      const t = themeFromEntry(DEFAULT_ENTRY);
       this.themes = [t];
       this.currentId = t.id;
       this.lang = navigator.language?.startsWith('ja') ? 'ja' : 'en';
     }
+    try {
+      const ref = localStorage.getItem(REF_KEY);
+      const parsed = ref ? JSON.parse(ref) : null;
+      if (isTheme(parsed)) this.reference = parsed;
+    } catch {}
     this.importFromHash();
+  }
+
+  setReference(t: Theme | null) {
+    this.reference = t;
+    try {
+      if (t) localStorage.setItem(REF_KEY, JSON.stringify(t));
+      else localStorage.removeItem(REF_KEY);
+    } catch {}
   }
 
   get theme(): Theme {

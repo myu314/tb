@@ -11,6 +11,7 @@ base16 / base24 のカラースキームを作るための PWA エディタで�
 - **サンプル** — コードエディタ、Markdown、ターミナル、トラッカー（ProTracker 風）、2 画面ファイラー。
 - **base16 / base24** — 切替可能。base24 化するときは base10〜17 を自動で生成します（後から編集できます）。
 - **補助ツール** — グレー階調の自動生成（OKLCH 補間）、アクセントの明度・彩度の一括調整、ダーク ↔ ライト反転、Undo / Redo（Ctrl+Z / Ctrl+Shift+Z）。
+- **ギャラリー** — [tinted-theming/schemes](https://github.com/tinted-theming/schemes)（MIT）の base16 / base24 テーマ 570 種を同梱。名前・作者検索、ダーク/ライト・16/24 の絞り込み、サンプルでの試し見ができます。「これを元に新規作成」すると `Based on "…" by …` のクレジットが自動で記録され、YAML の `description` に書き出されます。「参照として並べる」と、自作テーマとサンプルを左右（スマホでは上下）に並べて比較でき、ピッカーから参照テーマの同じスロットの色を取り込めます。
 - **保存・共有** — ブラウザ内に複数テーマを自動保存、base16/24 YAML の読み込み・書き出し（[tinted-theming](https://github.com/tinted-theming/home) 形式。旧形式の読み込みにも対応）、URL 共有。
 
 ## 開発
@@ -22,6 +23,15 @@ npm test         # 色計算・入出力のユニットテスト
 npm run check    # 型チェック
 npm run build    # dist/ に出力
 ```
+
+## 同梱テーマの更新
+
+```sh
+git clone --depth 1 https://github.com/tinted-theming/schemes /tmp/schemes
+node scripts/import-schemes.mjs /tmp/schemes   # src/data/schemes.json と LICENSE を更新
+```
+
+作者名は上流の記載を原文のまま保持しています。ライセンス全文とデータの取得元コミットは、アプリ内の「クレジット」画面（⚙ → ⓘ クレジット）で確認できます。
 
 ## デプロイ
 

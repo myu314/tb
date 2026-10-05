@@ -20,7 +20,7 @@
   } from '../lib/color';
   import { distinctLevel, livePairs, nearest } from '../lib/contrast';
   import { t } from '../lib/i18n';
-  import { ROLES, shortName } from '../lib/scheme';
+  import { effectivePalette, ROLES, shortName } from '../lib/scheme';
   import { app } from '../lib/state.svelte';
   import PairRow from './PairRow.svelte';
   import Slider from './Slider.svelte';
@@ -232,6 +232,12 @@
 
   const role = $derived(ROLES[app.selected]);
   const pairs = $derived(livePairs(app.selected, app.theme.system));
+  const refHex = $derived(app.reference ? effectivePalette(app.reference)[app.selected] : null);
+  function useRef() {
+    if (!refHex) return;
+    syncFrom(refHex, false);
+    emit(refHex, false);
+  }
   const near = $derived(nearest(app.theme.palette, app.selected, app.theme.system));
 </script>
 
@@ -243,6 +249,16 @@
       <div class="muted small">{role.uses[app.lang]}</div>
     </div>
   </header>
+
+  {#if refHex}
+    <div class="ref small">
+      <span class="muted">{t('reference')}</span>
+      <span class="duo"><span style:background={hex}></span><span style:background={refHex}></span></span>
+      <span class="mono">{refHex}</span>
+      <span class="muted name">{app.reference?.name}</span>
+      <button disabled={refHex === hex} onclick={useRef}>{t('useReferenceColor')}</button>
+    </div>
+  {/if}
 
   <div class="toolbar">
     <div class="seg" role="tablist">
@@ -354,6 +370,11 @@
   .formats { display: flex; flex-wrap: wrap; gap: 4px; }
   .fmt { min-height: 26px; padding: 1px 6px; font-size: 11px; }
   .live { border-top: 1px solid var(--ui-border); padding-top: 8px; }
+  .ref { display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+  .ref .duo { display: flex; width: 40px; height: 20px; border-radius: 4px; overflow: hidden; box-shadow: inset 0 0 0 1px rgb(127 127 127 / 0.3); flex: none; }
+  .ref .duo span { flex: 1; }
+  .ref .name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+  .ref button { min-height: 26px; padding: 0 8px; font-size: 12px; }
   .near { display: flex; gap: 8px; align-items: center; padding-top: 6px; border-top: 1px dashed var(--ui-border); margin-top: 4px; }
   .near .duo { display: flex; width: 40px; height: 20px; border-radius: 4px; overflow: hidden; box-shadow: inset 0 0 0 1px rgb(127 127 127 / 0.3); }
   .near .duo span { flex: 1; }
