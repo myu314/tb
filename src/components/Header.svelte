@@ -1,10 +1,13 @@
 <script lang="ts">
   import { t } from '../lib/i18n';
-  import { presetNames, presetTheme } from '../lib/presets';
+  import Credits from './Credits.svelte';
+  import Gallery from './Gallery.svelte';
   import { deriveBase24, slugify, type System, type Variant } from '../lib/scheme';
   import { app } from '../lib/state.svelte';
 
   let open = $state(false);
+  let showGallery = $state(false);
+  let showCredits = $state(false);
 
   function setSystem(s: System) {
     if (s === app.theme.system) return;
@@ -17,7 +20,7 @@
     if (v !== app.theme.variant) app.edit((th) => (th.variant = v));
   }
   // Name/author edits are not worth an undo step per keystroke.
-  function setMeta(field: 'name' | 'author', value: string) {
+  function setMeta(field: 'name' | 'author' | 'description', value: string) {
     app.theme[field] = value;
     if (field === 'name') app.theme.slug = slugify(value);
     app.save();
@@ -49,6 +52,7 @@
       {/each}
     </select>
     <button class="icon" class:on={open} onclick={() => (open = !open)} aria-expanded={open} title={t('themes')}>⚙</button>
+    <button class="gal" onclick={() => (showGallery = true)}>▦ <span class="lbl">{t('gallery')}</span></button>
     <span class="sp"></span>
     <button class="icon" disabled={!app.canUndo} onclick={() => app.undo()} title="{t('undo')} (Ctrl+Z)" aria-label={t('undo')}>↶</button>
     <button class="icon" disabled={!app.canRedo} onclick={() => app.redo()} title="{t('redo')} (Ctrl+Shift+Z)" aria-label={t('redo')}>↷</button>
@@ -64,6 +68,10 @@
       <label>
         <span class="small muted">{t('author')}</span>
         <input type="text" value={app.theme.author} oninput={(e) => setMeta('author', e.currentTarget.value)} />
+      </label>
+      <label class="wide">
+        <span class="small muted">{t('description')}</span>
+        <input type="text" value={app.theme.description ?? ''} oninput={(e) => setMeta('description', e.currentTarget.value)} />
       </label>
       <div class="field">
         <span class="small muted">{t('system')}</span>
@@ -81,17 +89,19 @@
       </div>
       {#if app.theme.system === 'base16'}<p class="small muted note">{t('toBase24')}</p>{/if}
       <div class="actions">
-        <select onchange={(e) => { const i = +e.currentTarget.value; if (i >= 0) app.addTheme(presetTheme(i)); e.currentTarget.value = '-1'; }}>
-          <option value="-1">＋ {t('newFromPreset')}</option>
-          {#each presetNames as n, i}<option value={i}>{n}</option>{/each}
-        </select>
+        <button onclick={() => (showGallery = true)}>＋ {t('newFromPreset')}</button>
         <button onclick={() => app.duplicate()}>{t('duplicate')}</button>
         <button disabled={app.themes.length <= 1} onclick={remove}>{t('delete')}</button>
+        <span class="sp"></span>
+        <button onclick={() => (showCredits = true)}>ⓘ {t('credits')}</button>
       </div>
       <p class="small muted note">{t('install')}</p>
     </div>
   {/if}
 </header>
+
+{#if showGallery}<Gallery onclose={() => (showGallery = false)} />{/if}
+{#if showCredits}<Credits onclose={() => (showCredits = false)} />{/if}
 
 <style>
   .hdr { background: var(--ui-panel); border-bottom: 1px solid var(--ui-border); padding: 6px 10px; padding-top: max(6px, env(safe-area-inset-top)); }
@@ -104,5 +114,8 @@
   .meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px 12px; padding: 10px 0 4px; }
   label, .field { display: flex; flex-direction: column; gap: 2px; }
   .actions { display: flex; gap: 6px; flex-wrap: wrap; grid-column: 1 / -1; }
+  .wide { grid-column: 1 / -1; }
+  .gal { white-space: nowrap; }
+  @media (max-width: 420px) { .gal .lbl { display: none; } }
   .note { margin: 0; grid-column: 1 / -1; }
 </style>

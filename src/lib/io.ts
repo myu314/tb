@@ -90,12 +90,13 @@ const b64url = {
 
 export function encodeShare(t: Theme): string {
   const colors = ALL_SLOTS.map((s) => t.palette[s].slice(1)).join('');
-  const parts = ['1', t.system === 'base24' ? '24' : '16', t.variant[0], t.name, t.author, colors];
+  const parts = ['1', t.system === 'base24' ? '24' : '16', t.variant[0], t.name, t.author, colors, t.description ?? ''];
   return b64url.enc(parts.map((p) => p.replace(/~/g, '-')).join('~'));
 }
 
 export function decodeShare(code: string): Theme {
-  const [ver, sys, v, name, author, colors] = b64url.dec(code).split('~');
+  // The trailing description is optional so that older links still decode.
+  const [ver, sys, v, name, author, colors, description] = b64url.dec(code).split('~');
   if (ver !== '1' || !colors || colors.length !== ALL_SLOTS.length * 6) throw new Error('Invalid share code');
   const palette = {} as Palette;
   ALL_SLOTS.forEach((s, i) => (palette[s] = '#' + colors.slice(i * 6, i * 6 + 6)));
@@ -103,6 +104,7 @@ export function decodeShare(code: string): Theme {
     id: newId(),
     name,
     author,
+    description: description || undefined,
     system: sys === '24' ? 'base24' : 'base16',
     variant: v === 'l' ? 'light' : 'dark',
     palette,

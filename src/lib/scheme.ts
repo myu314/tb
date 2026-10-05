@@ -41,6 +41,8 @@ export interface Theme {
   variant: Variant;
   palette: Palette;
   updatedAt: number;
+  /** Set when the theme was created from a published scheme, to keep its credit. */
+  basedOn?: { name: string; author: string; system: System; slug: string };
 }
 
 export const slotsOf = (system: System): readonly Slot[] =>
