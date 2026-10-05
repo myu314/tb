@@ -2,12 +2,14 @@
   import { t } from '../lib/i18n';
   import Credits from './Credits.svelte';
   import Gallery from './Gallery.svelte';
+  import NewTheme from './NewTheme.svelte';
   import { deriveBase24, slugify, type System, type Variant } from '../lib/scheme';
   import { app } from '../lib/state.svelte';
 
   let open = $state(false);
   let showGallery = $state(false);
   let showCredits = $state(false);
+  let showNew = $state(false);
 
   function setSystem(s: System) {
     if (s === app.theme.system) return;
@@ -52,6 +54,7 @@
       {/each}
     </select>
     <button class="icon" class:on={open} onclick={() => (open = !open)} aria-expanded={open} title={t('themes')}>⚙</button>
+    <button class="icon" onclick={() => (showNew = true)} title={t('newTheme')} aria-label={t('newTheme')}>＋</button>
     <button class="gal" onclick={() => (showGallery = true)}>▦ <span class="lbl">{t('gallery')}</span></button>
     <span class="sp"></span>
     <button class="icon" disabled={!app.canUndo} onclick={() => app.undo()} title="{t('undo')} (Ctrl+Z)" aria-label={t('undo')}>↶</button>
@@ -89,7 +92,7 @@
       </div>
       {#if app.theme.system === 'base16'}<p class="small muted note">{t('toBase24')}</p>{/if}
       <div class="actions">
-        <button onclick={() => (showGallery = true)}>＋ {t('newFromPreset')}</button>
+        <button onclick={() => (showNew = true)}>＋ {t('newFromPreset')}</button>
         <button onclick={() => app.duplicate()}>{t('duplicate')}</button>
         <button disabled={app.themes.length <= 1} onclick={remove}>{t('delete')}</button>
         <span class="sp"></span>
@@ -101,6 +104,7 @@
 </header>
 
 {#if showGallery}<Gallery onclose={() => (showGallery = false)} />{/if}
+{#if showNew}<NewTheme onclose={() => (showNew = false)} onopengallery={() => { showNew = false; showGallery = true; }} />{/if}
 {#if showCredits}<Credits onclose={() => (showCredits = false)} />{/if}
 
 <style>

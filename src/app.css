@@ -67,7 +67,7 @@ textarea { font-family: var(--mono); font-size: 12px; width: 100%; resize: verti
 .small { font-size: 12px; }
 
 /* segmented control */
-.seg { display: inline-flex; border: 1px solid var(--ui-border); border-radius: 6px; overflow: hidden; }
+.seg { display: inline-flex; width: fit-content; max-width: 100%; border: 1px solid var(--ui-border); border-radius: 6px; overflow: hidden; }
 .seg button { border: 0; border-radius: 0; background: transparent; min-height: 30px; padding: 2px 10px; }
 .seg button + button { border-left: 1px solid var(--ui-border); }
 .seg button.on { background: var(--ui-accent); color: var(--ui-bg); }
