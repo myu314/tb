@@ -1,7 +1,8 @@
 <script lang="ts">
   import { apcaContrast, wcagContrast } from '../lib/color';
+  import { fixContrast, separateAccents, type ContrastMetric } from '../lib/adjust';
   import { distinctPairs, distinctSlots, evaluate, rolePairs } from '../lib/contrast';
-  import { hexToOklch } from '../lib/color';
+  import { clamp, hexToOklch, oklchToHex } from '../lib/color';
   import { t } from '../lib/i18n';
   import { shortName, slotsOf, type Slot } from '../lib/scheme';
   import { app } from '../lib/state.svelte';
@@ -36,16 +37,87 @@
   const dShown = $derived(closeOnly ? dPairs.filter((x) => x.level !== 'ok') : dPairs);
   // Polar plot: angle = OKLCH hue, radius = chroma.
   const R = 80;
-  const dots = $derived.by(() => {
-    const lchs = distinctSlots(app.theme.system).map((s) => ({ s, c: hexToOklch(p[s]) }));
-    // Scale to the most saturated accent so low-chroma themes don't bunch up in the middle.
-    const cmax = Math.max(0.08, ...lchs.map((x) => x.c.c)) * 1.1;
-    return lchs.map(({ s, c }) => {
-      const r = (c.c / cmax) * R;
+  const lchs = $derived(distinctSlots(app.theme.system).map((s) => ({ s, c: hexToOklch(p[s]) })));
+  // Scale to the most saturated accent so low-chroma themes don't bunch up in the middle.
+  // The scale is frozen while dragging so the plot doesn't shift under the pointer.
+  const autoScale = $derived(Math.max(0.08, ...lchs.map((x) => x.c.c)) * 1.1);
+  let frozenScale = $state<number | null>(null);
+  const scale = $derived(frozenScale ?? autoScale);
+  const dots = $derived(
+    lchs.map(({ s, c }) => {
+      const r = (c.c / scale) * R;
       const a = (c.h * Math.PI) / 180;
       return { s, x: r * Math.cos(a), y: -r * Math.sin(a) };
-    });
-  });
+    }),
+  );
+  const pos = $derived(Object.fromEntries(dots.map((d) => [d.s, d])));
+  const links = $derived(dPairs.filter((x) => x.level !== 'ok'));
+
+  let svgEl = $state<SVGSVGElement>();
+  let drag: { slot: Slot; l: number } | null = null;
+
+  function dotDown(e: PointerEvent, s: Slot) {
+    app.selected = s;
+    drag = { slot: s, l: hexToOklch(p[s]).l };
+    frozenScale = autoScale;
+    svgEl!.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  }
+  function dragMove(e: PointerEvent) {
+    if (!drag || !svgEl) return;
+    const rect = svgEl.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 200 - 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 200 - 100;
+    const r = Math.min(Math.hypot(x, y), R);
+    const h = ((Math.atan2(-y, x) * 180) / Math.PI + 360) % 360;
+    const hex = oklchToHex({ l: drag.l, c: (r / R) * scale, h });
+    app.setColors({ [drag.slot]: hex }, { transient: true });
+  }
+  function dragEnd() {
+    if (!drag) return;
+    drag = null;
+    frozenScale = null;
+    app.commit();
+  }
+  function dotKey(e: KeyboardEvent, s: Slot) {
+    const c = hexToOklch(p[s]);
+    const big = e.shiftKey;
+    let next = { ...c };
+    if (e.key === 'ArrowLeft') next.h = (c.h + (big ? 10 : 2)) % 360;
+    else if (e.key === 'ArrowRight') next.h = (c.h - (big ? 10 : 2) + 360) % 360;
+    else if (e.key === 'ArrowUp') next.c = clamp(c.c + (big ? 0.02 : 0.005), 0, 0.4);
+    else if (e.key === 'ArrowDown') next.c = clamp(c.c - (big ? 0.02 : 0.005), 0, 0.4);
+    else return;
+    e.preventDefault();
+    app.selected = s;
+    app.setColors({ [s]: oklchToHex(next) });
+  }
+
+  // ---------- automatic fixes ----------
+
+  let fixMetric = $state<ContrastMetric>('both');
+  let message = $state('');
+  function flash(msg: string) {
+    message = msg;
+    setTimeout(() => { if (message === msg) message = ''; }, 4000);
+  }
+  function applyFix(colors: object, extra: string[] = []) {
+    const n = Object.keys(colors).length;
+    if (n) app.setColors(colors);
+    flash([n ? `${n} ${t('adjustedN')}` : t('nothingToFix'), ...extra].join(' / '));
+  }
+  function separateAll() {
+    const r = separateAccents(p, app.theme.system);
+    applyFix(r.colors, r.remaining ? [`${r.remaining} ${t('remainingN')}`] : []);
+  }
+  function separateOne(a: Slot, b: Slot) {
+    const r = separateAccents(p, app.theme.system, { only: [a, b] });
+    applyFix(r.colors, r.remaining ? [`${r.remaining} ${t('remainingN')}`] : []);
+  }
+  function fixFailing() {
+    const r = fixContrast(p, app.theme.system, fixMetric);
+    applyFix(r.colors, r.unfixable.length ? [`${r.unfixable.map(shortName).join(', ')}: ${t('unfixableN')}`] : []);
+  }
 
   const cmp = $derived({
     wcag: wcagContrast(p[a], p[b]),
@@ -63,6 +135,16 @@
   </div>
 
   {#if tab === 'pairs'}
+    <div class="row-flex">
+      <span class="small muted">{t('fixTarget')}</span>
+      <div class="seg">
+        <button class:on={fixMetric === 'wcag'} onclick={() => (fixMetric = 'wcag')}>WCAG</button>
+        <button class:on={fixMetric === 'apca'} onclick={() => (fixMetric = 'apca')}>APCA</button>
+        <button class:on={fixMetric === 'both'} onclick={() => (fixMetric = 'both')}>{t('both')}</button>
+      </div>
+      <button class="primary" onclick={fixFailing}>{t('fixFailing')}</button>
+    </div>
+    {#if message}<p class="small msg" role="status">{message}</p>{/if}
     <label class="small check"><input type="checkbox" bind:checked={failsOnly} /> {t('failsOnly')}</label>
     <div class="head small muted"><span></span><span></span><span>WCAG</span><span>APCA</span></div>
     {#each pairs as x (x.fg + x.bg)}
@@ -115,20 +197,49 @@
   {:else if tab === 'distinct'}
     <p class="small muted desc">{t('distinctDesc')}</p>
     <div class="map">
-      <svg viewBox="-100 -100 200 200" role="img" aria-label={t('hueMap')}>
+      <svg
+        bind:this={svgEl}
+        viewBox="-100 -100 200 200"
+        role="group"
+        aria-label={t('hueMap')}
+        onpointermove={dragMove}
+        onpointerup={dragEnd}
+        onpointercancel={dragEnd}
+      >
         <circle r={R} class="ring" />
         <circle r={R / 2} class="ring" />
         <line x1={-R} x2={R} class="ring" />
         <line y1={-R} y2={R} class="ring" />
+        <text x={R - 2} y={-3} class="scale" text-anchor="end">C {scale.toFixed(2)}</text>
+        {#each links as l (l.a + l.b)}
+          {#if pos[l.a] && pos[l.b]}
+            <line x1={pos[l.a].x} y1={pos[l.a].y} x2={pos[l.b].x} y2={pos[l.b].y} class="link-{l.level}" />
+          {/if}
+        {/each}
         {#each dots as d (d.s)}
-          <g role="button" tabindex="-1" onclick={() => (app.selected = d.s)} onkeydown={() => {}} class="dot">
+          <g
+            role="slider"
+            tabindex="0"
+            aria-label="{d.s} hue / chroma"
+            aria-valuenow={Math.round(hexToOklch(p[d.s]).h)}
+            class="dot"
+            class:sel={app.selected === d.s}
+            onpointerdown={(e) => dotDown(e, d.s)}
+            onkeydown={(e) => dotKey(e, d.s)}
+          >
+            <circle cx={d.x} cy={d.y} r="14" class="hit" />
             <circle cx={d.x} cy={d.y} r={app.selected === d.s ? 9 : 7} fill={p[d.s]} />
             <text x={d.x} y={d.y - 11} text-anchor="middle">{shortName(d.s)}</text>
           </g>
         {/each}
       </svg>
       <div class="small muted">{t('hueMap')}</div>
+      <p class="small muted hint">{t('dragHint')}</p>
     </div>
+    <div class="row-flex">
+      <button class="primary" disabled={!links.length} onclick={separateAll}>{t('separateAll')}</button>
+    </div>
+    {#if message}<p class="small msg" role="status">{message}</p>{/if}
     <label class="small check"><input type="checkbox" bind:checked={closeOnly} /> {t('problemsOnly')}</label>
     {#if dShown.length === 0}
       <p class="small ok-msg">✓ {t('noIssues')}</p>
@@ -147,6 +258,9 @@
           <span class="badge {x.level === 'ok' ? 'ok' : x.level}">{x.level === 'ok' ? 'OK' : x.level === 'warn' ? '△' : 'NG'}</span>
         </div>
         <div class="muted mono small">Δh {x.dh.toFixed(0)}°</div>
+        {#if x.level !== 'ok'}
+          <button class="sep" onclick={() => separateOne(x.a, x.b)}>{t('separateOne')}</button>
+        {:else}<span></span>{/if}
       </div>
     {/each}
   {:else}
@@ -220,11 +334,21 @@
   .map { display: flex; flex-direction: column; align-items: center; gap: 2px; }
   .map svg { width: 100%; max-width: 240px; overflow: visible; }
   .ring { fill: none; stroke: var(--ui-border); stroke-width: 1; }
-  .dot { cursor: pointer; }
+  .dot { cursor: grab; touch-action: none; outline: none; }
+  .dot .hit { fill: transparent; stroke: none; }
+  .dot.sel circle:not(.hit) { stroke-width: 2; }
+  .dot:focus-visible .hit { stroke: var(--ui-focus); stroke-width: 1.5; }
+  .map svg { touch-action: none; }
+  .scale { font: 8px var(--mono); fill: var(--ui-muted); }
+  .link-bad { stroke: var(--ui-bad); stroke-width: 2; }
+  .link-warn { stroke: var(--ui-warn); stroke-width: 1.5; stroke-dasharray: 4 3; }
+  .hint { margin: 0; text-align: center; }
+  .msg { margin: 0; padding: 6px 10px; border-radius: 6px; background: var(--ui-panel-2); }
+  .sep { min-height: 26px; padding: 0 8px; font-size: 12px; }
   .dot circle { stroke: var(--ui-text); stroke-width: 1; }
   .dot text { font: 9px var(--mono); fill: var(--ui-muted); }
   .ok-msg { color: var(--ui-ok); margin: 0; }
-  .dpair { display: grid; grid-template-columns: 44px 56px 1fr auto 3.5em; gap: 8px; align-items: center; padding: 3px 0; }
+  .dpair { display: grid; grid-template-columns: 44px 56px 1fr auto 3.2em auto; gap: 8px; align-items: center; padding: 3px 0; }
   .duo { display: flex; height: 28px; border-radius: 6px; overflow: hidden; box-shadow: inset 0 0 0 1px rgb(127 127 127 / 0.3); }
   .duo span { flex: 1; }
   .ontext { display: flex; justify-content: space-around; border-radius: 6px; height: 28px; align-items: center; font-weight: 600; box-shadow: inset 0 0 0 1px rgb(127 127 127 / 0.3); }
