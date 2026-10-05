@@ -1,0 +1,78 @@
+:root {
+  --ui-bg: #f4f4f5;
+  --ui-panel: #ffffff;
+  --ui-panel-2: #ececee;
+  --ui-border: #d4d4d8;
+  --ui-text: #18181b;
+  --ui-muted: #63636b;
+  --ui-accent: #3f3f46;
+  --ui-focus: #2563eb;
+  --ui-ok: #15803d;
+  --ui-warn: #a16207;
+  --ui-bad: #b91c1c;
+  --radius: 8px;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ui-bg: #18181a;
+    --ui-panel: #232326;
+    --ui-panel-2: #2c2c30;
+    --ui-border: #3a3a3f;
+    --ui-text: #ececee;
+    --ui-muted: #9a9aa3;
+    --ui-accent: #d4d4d8;
+    --ui-focus: #60a5fa;
+    --ui-ok: #4ade80;
+    --ui-warn: #facc15;
+    --ui-bad: #f87171;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  font: 14px/1.5 system-ui, -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+#app { height: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button {
+  background: var(--ui-panel-2);
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  min-height: 32px;
+}
+button:hover:not(:disabled) { border-color: var(--ui-muted); }
+button:disabled { opacity: 0.4; cursor: default; }
+button.primary { background: var(--ui-accent); color: var(--ui-bg); border-color: var(--ui-accent); }
+input[type='text'], input[type='number'], select, textarea {
+  background: var(--ui-panel);
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  min-height: 32px;
+  min-width: 0;
+}
+textarea { font-family: var(--mono); font-size: 12px; width: 100%; resize: vertical; }
+:focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 1px; }
+.mono { font-family: var(--mono); }
+.muted { color: var(--ui-muted); }
+.small { font-size: 12px; }
+
+/* segmented control */
+.seg { display: inline-flex; border: 1px solid var(--ui-border); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: transparent; min-height: 30px; padding: 2px 10px; }
+.seg button + button { border-left: 1px solid var(--ui-border); }
+.seg button.on { background: var(--ui-accent); color: var(--ui-bg); }
+
+.badge { display: inline-block; font-size: 11px; line-height: 1; padding: 3px 5px; border-radius: 4px; font-weight: 600; }
+.badge.ok { background: color-mix(in srgb, var(--ui-ok) 20%, transparent); color: var(--ui-ok); }
+.badge.warn { background: color-mix(in srgb, var(--ui-warn) 20%, transparent); color: var(--ui-warn); }
+.badge.bad { background: color-mix(in srgb, var(--ui-bad) 20%, transparent); color: var(--ui-bad); }

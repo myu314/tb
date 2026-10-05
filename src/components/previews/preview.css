@@ -1,0 +1,101 @@
+/* Generated: color utility classes for previews. f-XX = text color, b-XX = background. */
+.pv .f-00 { color: var(--base00); }
+.pv .b-00 { background-color: var(--base00); }
+.pv .bd-00 { border-color: var(--base00); }
+.pv .f-01 { color: var(--base01); }
+.pv .b-01 { background-color: var(--base01); }
+.pv .bd-01 { border-color: var(--base01); }
+.pv .f-02 { color: var(--base02); }
+.pv .b-02 { background-color: var(--base02); }
+.pv .bd-02 { border-color: var(--base02); }
+.pv .f-03 { color: var(--base03); }
+.pv .b-03 { background-color: var(--base03); }
+.pv .bd-03 { border-color: var(--base03); }
+.pv .f-04 { color: var(--base04); }
+.pv .b-04 { background-color: var(--base04); }
+.pv .bd-04 { border-color: var(--base04); }
+.pv .f-05 { color: var(--base05); }
+.pv .b-05 { background-color: var(--base05); }
+.pv .bd-05 { border-color: var(--base05); }
+.pv .f-06 { color: var(--base06); }
+.pv .b-06 { background-color: var(--base06); }
+.pv .bd-06 { border-color: var(--base06); }
+.pv .f-07 { color: var(--base07); }
+.pv .b-07 { background-color: var(--base07); }
+.pv .bd-07 { border-color: var(--base07); }
+.pv .f-08 { color: var(--base08); }
+.pv .b-08 { background-color: var(--base08); }
+.pv .bd-08 { border-color: var(--base08); }
+.pv .f-09 { color: var(--base09); }
+.pv .b-09 { background-color: var(--base09); }
+.pv .bd-09 { border-color: var(--base09); }
+.pv .f-0A { color: var(--base0A); }
+.pv .b-0A { background-color: var(--base0A); }
+.pv .bd-0A { border-color: var(--base0A); }
+.pv .f-0B { color: var(--base0B); }
+.pv .b-0B { background-color: var(--base0B); }
+.pv .bd-0B { border-color: var(--base0B); }
+.pv .f-0C { color: var(--base0C); }
+.pv .b-0C { background-color: var(--base0C); }
+.pv .bd-0C { border-color: var(--base0C); }
+.pv .f-0D { color: var(--base0D); }
+.pv .b-0D { background-color: var(--base0D); }
+.pv .bd-0D { border-color: var(--base0D); }
+.pv .f-0E { color: var(--base0E); }
+.pv .b-0E { background-color: var(--base0E); }
+.pv .bd-0E { border-color: var(--base0E); }
+.pv .f-0F { color: var(--base0F); }
+.pv .b-0F { background-color: var(--base0F); }
+.pv .bd-0F { border-color: var(--base0F); }
+.pv .f-10 { color: var(--base10); }
+.pv .b-10 { background-color: var(--base10); }
+.pv .bd-10 { border-color: var(--base10); }
+.pv .f-11 { color: var(--base11); }
+.pv .b-11 { background-color: var(--base11); }
+.pv .bd-11 { border-color: var(--base11); }
+.pv .f-12 { color: var(--base12); }
+.pv .b-12 { background-color: var(--base12); }
+.pv .bd-12 { border-color: var(--base12); }
+.pv .f-13 { color: var(--base13); }
+.pv .b-13 { background-color: var(--base13); }
+.pv .bd-13 { border-color: var(--base13); }
+.pv .f-14 { color: var(--base14); }
+.pv .b-14 { background-color: var(--base14); }
+.pv .bd-14 { border-color: var(--base14); }
+.pv .f-15 { color: var(--base15); }
+.pv .b-15 { background-color: var(--base15); }
+.pv .bd-15 { border-color: var(--base15); }
+.pv .f-16 { color: var(--base16); }
+.pv .b-16 { background-color: var(--base16); }
+.pv .bd-16 { border-color: var(--base16); }
+.pv .f-17 { color: var(--base17); }
+.pv .b-17 { background-color: var(--base17); }
+.pv .bd-17 { border-color: var(--base17); }
+
+/* Role highlight: outline every element painted with the selected slot. */
+.pv[data-hl='00'] :is(.f-00, .b-00, .bd-00) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='01'] :is(.f-01, .b-01, .bd-01) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='02'] :is(.f-02, .b-02, .bd-02) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='03'] :is(.f-03, .b-03, .bd-03) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='04'] :is(.f-04, .b-04, .bd-04) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='05'] :is(.f-05, .b-05, .bd-05) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='06'] :is(.f-06, .b-06, .bd-06) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='07'] :is(.f-07, .b-07, .bd-07) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='08'] :is(.f-08, .b-08, .bd-08) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='09'] :is(.f-09, .b-09, .bd-09) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='0A'] :is(.f-0A, .b-0A, .bd-0A) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='0B'] :is(.f-0B, .b-0B, .bd-0B) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='0C'] :is(.f-0C, .b-0C, .bd-0C) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='0D'] :is(.f-0D, .b-0D, .bd-0D) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='0E'] :is(.f-0E, .b-0E, .bd-0E) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='0F'] :is(.f-0F, .b-0F, .bd-0F) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='10'] :is(.f-10, .b-10, .bd-10) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='11'] :is(.f-11, .b-11, .bd-11) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='12'] :is(.f-12, .b-12, .bd-12) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='13'] :is(.f-13, .b-13, .bd-13) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='14'] :is(.f-14, .b-14, .bd-14) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='15'] :is(.f-15, .b-15, .bd-15) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='16'] :is(.f-16, .b-16, .bd-16) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+.pv[data-hl='17'] :is(.f-17, .b-17, .bd-17) { outline: 1.5px dashed var(--hl-ring); outline-offset: -1px; animation: hl-pulse 1.6s ease-in-out infinite; }
+@keyframes hl-pulse { 50% { outline-color: transparent; } }
+@media (prefers-reduced-motion: reduce) { .pv [class] { animation: none !important; } }
