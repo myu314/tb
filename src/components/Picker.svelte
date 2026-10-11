@@ -18,11 +18,10 @@
     type OKLCH,
     type RGB,
   } from '../lib/color';
-  import { distinctLevel, livePairs, nearest } from '../lib/contrast';
+  import { distinctLevel, nearest } from '../lib/contrast';
   import { t } from '../lib/i18n';
   import { effectivePalette, ROLES, shortName } from '../lib/scheme';
   import { app } from '../lib/state.svelte';
-  import PairRow from './PairRow.svelte';
   import Slider from './Slider.svelte';
 
   type Mode = 'rgb' | 'hsv' | 'oklch';
@@ -231,7 +230,6 @@
   }
 
   const role = $derived(ROLES[app.selected]);
-  const pairs = $derived(livePairs(app.selected, app.theme.system));
   const refHex = $derived(app.reference ? effectivePalette(app.reference)[app.selected] : null);
   function useRef() {
     if (!refHex) return;
@@ -315,13 +313,9 @@
     {/each}
   </div>
 
-  <div class="live">
-    <div class="muted small">{t('vsBg')}</div>
-    {#each pairs as p (p.fg + p.bg)}
-      <PairRow fg={p.fg} bg={p.bg} kind={p.kind} />
-    {/each}
-    {#if near}
-      {@const lv = distinctLevel(near.de)}
+  {#if near}
+    {@const lv = distinctLevel(near.de)}
+    <div class="live">
       <div class="near small">
         <span class="muted">{t('nearestColor')}</span>
         <span class="duo"><span style:background={hex}></span><span style:background={app.theme.palette[near.slot]}></span></span>
@@ -330,8 +324,8 @@
         <span class="mono">ΔE {near.de.toFixed(1)}</span>
         <span class="badge {lv}">{lv === 'ok' ? 'OK' : lv === 'warn' ? '△' : 'NG'}</span>
       </div>
-    {/if}
-  </div>
+    </div>
+  {/if}
 </section>
 
 <style>
@@ -346,6 +340,7 @@
     display: block;
     width: 100%;
     aspect-ratio: 1.6;
+    max-height: 32vh; /* keep the sliders visible in short panes */
     border-radius: 6px;
     touch-action: none;
     cursor: crosshair;
@@ -375,7 +370,7 @@
   .ref .duo span { flex: 1; }
   .ref .name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
   .ref button { min-height: 26px; padding: 0 8px; font-size: 12px; }
-  .near { display: flex; gap: 8px; align-items: center; padding-top: 6px; border-top: 1px dashed var(--ui-border); margin-top: 4px; }
+  .near { display: flex; gap: 8px; align-items: center; }
   .near .duo { display: flex; width: 40px; height: 20px; border-radius: 4px; overflow: hidden; box-shadow: inset 0 0 0 1px rgb(127 127 127 / 0.3); }
   .near .duo span { flex: 1; }
   .near .sp { flex: 1; }

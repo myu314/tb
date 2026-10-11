@@ -58,18 +58,6 @@ export function evaluate(p: Palette, fg: Slot, bg: Slot, kind: PairKind): PairRe
   return { wcag, apca, passWcag: wcag >= th.wcag, passApca: Math.abs(apca) >= th.apca };
 }
 
-const BG_SLOTS: Slot[] = ['base00', 'base01', 'base02', 'base07', 'base10', 'base11'];
-
-/** Pairs to show next to the picker for the slot being edited. */
-export function livePairs(slot: Slot, system: System): { fg: Slot; bg: Slot; kind: PairKind }[] {
-  const all = rolePairs(system).filter((p) => p.fg === slot || p.bg === slot);
-  if (all.length) return all.slice(0, 6);
-  // Slots without a defined pair: compare against the main background / foreground.
-  return BG_SLOTS.includes(slot)
-    ? [{ fg: 'base05', bg: slot, kind: 'text' }]
-    : [{ fg: slot, bg: 'base00', kind: 'text' }];
-}
-
 // ---------- distinguishability between accents ----------
 
 /** ΔE in OKLab (×100 for readability). ~2 is a just-noticeable difference. */
