@@ -3,6 +3,7 @@
   import Credits from './Credits.svelte';
   import Gallery from './Gallery.svelte';
   import NewTheme from './NewTheme.svelte';
+  import { layout } from '../lib/layout.svelte';
   import { deriveBase24, slugify, type System, type Variant } from '../lib/scheme';
   import { app } from '../lib/state.svelte';
 
@@ -96,6 +97,7 @@
         <button onclick={() => app.duplicate()}>{t('duplicate')}</button>
         <button disabled={app.themes.length <= 1} onclick={remove}>{t('delete')}</button>
         <span class="sp"></span>
+        <button onclick={() => layout.reset()}>{t('resetLayout')}</button>
         <button onclick={() => (showCredits = true)}>ⓘ {t('credits')}</button>
       </div>
       <p class="small muted note">{t('install')}</p>

@@ -44,6 +44,8 @@ class AppState {
   lang = $state<Lang>('ja');
   /** A published scheme shown next to the current theme for comparison. */
   reference = $state<Theme | null>(null);
+  /** Two colors under comparison, shared by the matrix (sets it) and the compare panel. */
+  compare = $state<{ a: Slot; b: Slot }>({ a: 'base05', b: 'base00' });
 
   // Undo history per theme id; snapshots are whole themes.
   #past = $state<Record<string, Theme[]>>({});

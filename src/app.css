@@ -76,3 +76,10 @@ textarea { font-family: var(--mono); font-size: 12px; width: 100%; resize: verti
 .badge.ok { background: color-mix(in srgb, var(--ui-ok) 20%, transparent); color: var(--ui-ok); }
 .badge.warn { background: color-mix(in srgb, var(--ui-warn) 20%, transparent); color: var(--ui-warn); }
 .badge.bad { background: color-mix(in srgb, var(--ui-bad) 20%, transparent); color: var(--ui-bad); }
+
+/* shared panel helpers */
+.row-flex { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.check { display: flex; gap: 6px; align-items: center; }
+.msg { margin: 0; padding: 6px 10px; border-radius: 6px; background: var(--ui-panel-2); }
+.link { all: unset; cursor: pointer; text-decoration: underline dotted; }
+.panel-body { display: flex; flex-direction: column; gap: 8px; }
