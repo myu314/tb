@@ -8,6 +8,9 @@
   import { app } from '../lib/state.svelte';
   import Modal from './Modal.svelte';
   import CustomSampleView from './previews/CustomSampleView.svelte';
+  import spec from '../../docs/custom-samples.md?raw';
+
+  const SPEC_URL = 'https://github.com/myu314/tb/blob/main/docs/custom-samples.md';
 
   interface Props {
     /** Sample to edit; omitted to create a new one. */
@@ -63,6 +66,15 @@
     }
   }
 
+  async function copySpec() {
+    try {
+      await navigator.clipboard.writeText(spec);
+      message = t('specCopied');
+    } catch {
+      message = '✗';
+    }
+  }
+
   function saveFile() {
     const ext = format === 'html' ? 'html' : 'txt';
     downloadText(`${slugify(name)}.${ext}`, source, format === 'html' ? 'text/html' : 'text/plain');
@@ -89,7 +101,13 @@
       <details>
         <summary class="small">{t('syntaxHelp')}</summary>
         <p class="small muted">{format === 'text' ? t('textHelp') : t('htmlHelp')}</p>
-        <button class="small" onclick={() => (source = STARTERS[format])}>{t('useStarter')}</button>
+        <div class="row-flex">
+          <button class="small" onclick={() => (source = STARTERS[format])}>{t('useStarter')}</button>
+          {#if format === 'html'}
+            <button class="small" onclick={copySpec}>{t('copySpec')}</button>
+            <a class="small" href={SPEC_URL} target="_blank" rel="noopener">{t('viewSpec')} ↗</a>
+          {/if}
+        </div>
       </details>
       <div class="row-flex">
         <label class="file">
@@ -122,6 +140,7 @@
   .field { display: flex; flex-direction: column; gap: 2px; }
   .src { flex: 1; min-height: 220px; font-size: 12.5px; line-height: 1.5; tab-size: 2; white-space: pre; overflow-x: auto; }
   details p { margin: 6px 0; line-height: 1.6; }
+  details a { color: var(--ui-muted); }
   .file { position: relative; display: inline-flex; align-items: center; border: 1px solid var(--ui-border); border-radius: 6px; padding: 4px 10px; min-height: 32px; background: var(--ui-panel-2); cursor: pointer; }
   .file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
   .actions { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--ui-border); }
