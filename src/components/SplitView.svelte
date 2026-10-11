@@ -16,6 +16,7 @@
     layout.setRatio(node.id, v);
   }
   function down(e: PointerEvent) {
+    if (layout.locked) return;
     dragging = true;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     e.preventDefault();
@@ -29,7 +30,7 @@
     layout.save();
   }
   function key(e: KeyboardEvent) {
-    if (node.type !== 'split') return;
+    if (node.type !== 'split' || layout.locked) return;
     const back = node.dir === 'row' ? 'ArrowLeft' : 'ArrowUp';
     const fwd = node.dir === 'row' ? 'ArrowRight' : 'ArrowDown';
     if (e.key !== back && e.key !== fwd) return;
@@ -41,8 +42,13 @@
 
 {#if node.type === 'leaf'}
   <Pane
-    panel={node.panel}
-    onchange={(k) => layout.setPanel(node.id, k)}
+    tabs={node.tabs}
+    active={node.active}
+    locked={layout.locked}
+    onselect={(i) => layout.selectTab(node.id, i)}
+    onadd={(k) => layout.addTab(node.id, k)}
+    onclosetab={(i) => layout.closeTab(node.id, i)}
+    canCloseLast={layout.leafCount > 1}
     onsplit={(dir) => layout.split(node.id, dir)}
     onclose={layout.leafCount > 1 ? () => layout.remove(node.id) : undefined}
     canSplit={layout.canSplit}
@@ -54,8 +60,9 @@
     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
     <div
       class="divider"
+      class:locked={layout.locked}
       role="separator"
-      tabindex="0"
+      tabindex={layout.locked ? -1 : 0}
       aria-label={t('resize')}
       aria-orientation={node.dir === 'row' ? 'vertical' : 'horizontal'}
       aria-valuenow={Math.round(node.ratio * 100)}
@@ -80,5 +87,7 @@
   .divider::before { content: ''; position: absolute; inset: -4px; }
   .row > .divider::before { inset: 0 -4px; }
   .col > .divider::before { inset: -4px 0; }
-  .divider:hover, .divider:focus-visible { background: var(--ui-focus); outline: none; }
+  .divider:not(.locked):hover, .divider:focus-visible { background: var(--ui-focus); outline: none; }
+  .divider.locked { cursor: default; }
+  .divider.locked::before { display: none; }
 </style>

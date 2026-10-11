@@ -60,6 +60,19 @@
     <span class="sp"></span>
     <button class="icon" disabled={!app.canUndo} onclick={() => app.undo()} title="{t('undo')} (Ctrl+Z)" aria-label={t('undo')}>↶</button>
     <button class="icon" disabled={!app.canRedo} onclick={() => app.redo()} title="{t('redo')} (Ctrl+Shift+Z)" aria-label={t('redo')}>↷</button>
+    <button
+      class="icon"
+      class:on={layout.locked}
+      aria-pressed={layout.locked}
+      onclick={() => layout.toggleLock()}
+      title={layout.locked ? t('unlockLayout') : t('lockLayout')}
+      aria-label={t('lockLayout')}
+    >
+      <svg class="lock" viewBox="0 0 16 16" aria-hidden="true">
+        <rect x="3" y="7" width="10" height="7" rx="1.5" />
+        {#if layout.locked}<path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />{:else}<path d="M5.5 7V5a2.5 2.5 0 0 1 4.9-.7" />{/if}
+      </svg>
+    </button>
     <button class="icon lang" onclick={() => { app.lang = app.lang === 'ja' ? 'en' : 'ja'; app.save(); }}>{app.lang === 'ja' ? 'EN' : 'JA'}</button>
   </div>
 
@@ -97,7 +110,7 @@
         <button onclick={() => app.duplicate()}>{t('duplicate')}</button>
         <button disabled={app.themes.length <= 1} onclick={remove}>{t('delete')}</button>
         <span class="sp"></span>
-        <button onclick={() => layout.reset()}>{t('resetLayout')}</button>
+        <button disabled={layout.locked} onclick={() => layout.reset()}>{t('resetLayout')}</button>
         <button onclick={() => (showCredits = true)}>ⓘ {t('credits')}</button>
       </div>
       <p class="small muted note">{t('install')}</p>
@@ -116,12 +129,21 @@
   .icon { min-width: 34px; padding: 2px 6px; font-size: 16px; }
   .icon.on { background: var(--ui-accent); color: var(--ui-bg); }
   .lang { font-size: 12px; font-weight: 600; }
+  .lock { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; display: block; margin: auto; }
   .sp { flex: 1; }
   .meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px 12px; padding: 10px 0 4px; }
   label, .field { display: flex; flex-direction: column; gap: 2px; }
   .actions { display: flex; gap: 6px; flex-wrap: wrap; grid-column: 1 / -1; }
   .wide { grid-column: 1 / -1; }
   .gal { white-space: nowrap; }
-  @media (max-width: 420px) { .gal .lbl { display: none; } }
+  @media (max-width: 420px) {
+    .gal .lbl { display: none; }
+    /* Make room for the theme name next to the icon buttons. */
+    .bar { gap: 4px; }
+    .bar img { display: none; }
+    .icon, .gal { min-width: 32px; padding: 2px 4px; }
+    .themes { flex: 1; min-width: 0; max-width: none; }
+    .bar > .sp { display: none; }
+  }
   .note { margin: 0; grid-column: 1 / -1; }
 </style>
