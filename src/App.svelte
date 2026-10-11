@@ -17,6 +17,13 @@
   mq.addEventListener('change', (e) => (wide = e.matches));
 
   let tab = $state<Tab>('picker');
+
+  // Phone: the top half shows either the samples or the contrast panel next to the picker below.
+  const savedView = (() => { try { return localStorage.getItem('theme-bench:top-view'); } catch { return null; } })();
+  let topView = $state<'samples' | 'contrast'>(savedView === 'contrast' ? 'contrast' : 'samples');
+  $effect(() => {
+    try { localStorage.setItem('theme-bench:top-view', topView); } catch {}
+  });
   // On desktop the palette list is always visible, so there is no "roles" tab.
   const tabs = $derived<Tab[]>(wide ? ['picker', 'contrast', 'tools', 'export'] : ['picker', 'roles', 'contrast', 'tools', 'export']);
   $effect(() => {
@@ -43,7 +50,12 @@
           {#each tabs as k}<button class:on={tab === k} onclick={() => (tab = k)}>{t(k as Key)}</button>{/each}
         </nav>
         <div class="scroll">
-          {#if tab === 'picker'}<Picker />
+          {#if tab === 'picker'}
+            <Picker />
+            <div class="dock">
+              <h3 class="small muted">{t('contrast')}</h3>
+              <ContrastPanel docked />
+            </div>
           {:else if tab === 'contrast'}<ContrastPanel />
           {:else if tab === 'tools'}<ToolsPanel />
           {:else}<ExportPanel />{/if}
@@ -53,7 +65,13 @@
     </main>
   {:else}
     <main class="mobile">
-      <div class="top"><Preview /></div>
+      <div class="top">
+        <div class="seg view" role="tablist">
+          <button class:on={topView === 'samples'} role="tab" aria-selected={topView === 'samples'} onclick={() => (topView = 'samples')}>{t('sampleView')}</button>
+          <button class:on={topView === 'contrast'} role="tab" aria-selected={topView === 'contrast'} onclick={() => (topView = 'contrast')}>{t('contrast')}</button>
+        </div>
+        {#if topView === 'samples'}<div class="topbody"><Preview /></div>{:else}<div class="topcontrast"><ContrastPanel docked /></div>{/if}
+      </div>
       <div class="strip"><PaletteList compact /></div>
       <nav class="mtabs">
         {#each tabs as k}<button class:on={tab === k} onclick={() => (tab = k)}>{t(k as Key)}</button>{/each}
@@ -80,6 +98,12 @@
   .tabbar { margin: 10px 12px 0; align-self: flex-start; }
   .editor .scroll { overflow: auto; padding: 12px; flex: 1; }
   .samples { display: flex; flex-direction: column; }
+  .dock { margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--ui-border); }
+  .dock h3 { margin: 0 0 6px; font-weight: 600; }
+  .view { flex: none; margin-bottom: 4px; }
+  .view button { min-height: 26px; font-size: 12px; padding: 0 10px; }
+  .topbody { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .topcontrast { flex: 1; min-height: 0; overflow: auto; padding: 6px 4px 8px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--ui-border); background: var(--ui-panel); overscroll-behavior: contain; }
 
   .mobile { display: flex; flex-direction: column; }
   .top { height: 44dvh; min-height: 220px; padding: 6px 8px 0; flex: none; display: flex; flex-direction: column; }

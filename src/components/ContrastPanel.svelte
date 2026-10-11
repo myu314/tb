@@ -8,9 +8,26 @@
   import { app } from '../lib/state.svelte';
   import PairRow from './PairRow.svelte';
 
+  interface Props {
+    /** Shown next to the picker: no matrix, and focused on the color being edited. */
+    docked?: boolean;
+  }
+  let { docked = false }: Props = $props();
+
   type Tab = 'pairs' | 'matrix' | 'compare' | 'distinct';
-  let tab = $state<Tab>('pairs');
+  // `docked` is fixed for the lifetime of a panel, so reading its initial value is intended.
+  // svelte-ignore state_referenced_locally
+  const TABS: Tab[] = docked ? ['pairs', 'compare', 'distinct'] : ['pairs', 'matrix', 'compare', 'distinct'];
+  // svelte-ignore state_referenced_locally
+  const TAB_KEY = docked ? 'theme-bench:dock-tab' : 'theme-bench:contrast-tab';
+  const savedTab = (() => { try { return localStorage.getItem(TAB_KEY) as Tab | null; } catch { return null; } })();
+  let tab = $state<Tab>(savedTab && TABS.includes(savedTab) ? savedTab : 'pairs');
+  $effect(() => {
+    try { localStorage.setItem(TAB_KEY, tab); } catch {}
+  });
   let failsOnly = $state(false);
+  // svelte-ignore state_referenced_locally
+  let relatedOnly = $state(docked);
   let metric = $state<'wcag' | 'apca'>('wcag');
   let a = $state<Slot>('base05');
   let b = $state<Slot>('base00');
@@ -19,9 +36,20 @@
   const slots = $derived(slotsOf(app.theme.system));
   const pairs = $derived(
     rolePairs(app.theme.system).filter(
-      (x) => !failsOnly || (() => { const r = evaluate(p, x.fg, x.bg, x.kind); return !r.passWcag || !r.passApca; })(),
+      (x) =>
+        (!relatedOnly || x.fg === app.selected || x.bg === app.selected) &&
+        (!failsOnly || (() => { const r = evaluate(p, x.fg, x.bg, x.kind); return !r.passWcag || !r.passApca; })()),
     ),
   );
+
+  // Next to the picker, the two-color comparison follows the color being edited.
+  const BG_LIKE: Slot[] = ['base00', 'base01', 'base02', 'base07', 'base10', 'base11'];
+  $effect(() => {
+    if (!docked) return;
+    const s = app.selected;
+    if (BG_LIKE.includes(s)) b = s;
+    else a = s;
+  });
 
   function cell(fg: Slot, bg: Slot) {
     if (metric === 'wcag') {
@@ -126,12 +154,11 @@
   });
 </script>
 
-<section class="contrast">
+<section class="contrast" class:docked>
   <div class="seg tabs" role="tablist">
-    <button class:on={tab === 'pairs'} onclick={() => (tab = 'pairs')}>{t('pairs')}</button>
-    <button class:on={tab === 'matrix'} onclick={() => (tab = 'matrix')}>{t('matrix')}</button>
-    <button class:on={tab === 'compare'} onclick={() => (tab = 'compare')}>{t('compare')}</button>
-    <button class:on={tab === 'distinct'} onclick={() => (tab = 'distinct')}>{t('distinct')}</button>
+    {#each TABS as k}
+      <button class:on={tab === k} role="tab" aria-selected={tab === k} onclick={() => (tab = k)}>{t(k)}</button>
+    {/each}
   </div>
 
   {#if tab === 'pairs'}
@@ -145,7 +172,13 @@
       <button class="primary" onclick={fixFailing}>{t('fixFailing')}</button>
     </div>
     {#if message}<p class="small msg" role="status">{message}</p>{/if}
-    <label class="small check"><input type="checkbox" bind:checked={failsOnly} /> {t('failsOnly')}</label>
+    <div class="row-flex">
+      <label class="small check"><input type="checkbox" bind:checked={relatedOnly} /> {t('relatedOnly')}</label>
+      <label class="small check"><input type="checkbox" bind:checked={failsOnly} /> {t('failsOnly')}</label>
+    </div>
+    {#if pairs.length === 0}
+      <p class="small muted">{relatedOnly ? t('noRelatedPairs') : t('nothingToFix')}</p>
+    {/if}
     <div class="head small muted"><span></span><span></span><span>WCAG</span><span>APCA</span></div>
     {#each pairs as x (x.fg + x.bg)}
       <PairRow fg={x.fg} bg={x.bg} kind={x.kind} label={x.label[app.lang]} />
@@ -195,7 +228,7 @@
       <span class="lg low">■</span> <span>&lt;</span>
     </div>
   {:else if tab === 'distinct'}
-    <p class="small muted desc">{t('distinctDesc')}</p>
+    {#if !docked}<p class="small muted desc">{t('distinctDesc')}</p>{/if}
     <div class="map">
       <svg
         bind:this={svgEl}
@@ -234,7 +267,7 @@
         {/each}
       </svg>
       <div class="small muted">{t('hueMap')}</div>
-      <p class="small muted hint">{t('dragHint')}</p>
+      {#if !docked}<p class="small muted hint">{t('dragHint')}</p>{/if}
     </div>
     <div class="row-flex">
       <button class="primary" disabled={!links.length} onclick={separateAll}>{t('separateAll')}</button>
@@ -296,7 +329,7 @@
       <button onclick={() => { const x = a; a = b; b = x; }}>⇅ {t('swap')}</button>
     </div>
   {/if}
-  <p class="legend small muted">{t('legend')}</p>
+  {#if !docked}<p class="legend small muted">{t('legend')}</p>{/if}
 </section>
 
 <style>
