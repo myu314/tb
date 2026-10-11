@@ -26,6 +26,7 @@
   let mobileBox = $state<HTMLElement>();
   let dragging = false;
   function gripDown(e: PointerEvent) {
+    if (layout.locked) return;
     dragging = true;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     e.preventDefault();
@@ -41,6 +42,7 @@
     layout.save();
   }
   function gripKey(e: KeyboardEvent) {
+    if (layout.locked) return;
     if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
     e.preventDefault();
     layout.setMobileRatio(layout.mobile.ratio + (e.key === 'ArrowDown' ? 0.03 : -0.03));
@@ -55,15 +57,23 @@
   {:else}
     <main class="mobile" bind:this={mobileBox}>
       <div class="mpane" style:flex-grow={layout.mobile.ratio}>
-        <Pane panel={layout.mobile.top} onchange={(k) => layout.setMobilePanel('top', k)} />
+        <Pane
+          tabs={layout.mobile.top.tabs}
+          active={layout.mobile.top.active}
+          locked={layout.locked}
+          onselect={(i) => layout.selectMobileTab('top', i)}
+          onadd={(k) => layout.addMobileTab('top', k)}
+          onclosetab={(i) => layout.closeMobileTab('top', i)}
+        />
       </div>
       <div class="strip">
         <!-- A focusable separator is the ARIA window-splitter pattern; arrow keys resize. -->
         <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
         <div
           class="grip"
+          class:locked={layout.locked}
           role="separator"
-          tabindex="0"
+          tabindex={layout.locked ? -1 : 0}
           aria-label={t('resize')}
           aria-orientation="horizontal"
           aria-valuenow={Math.round(layout.mobile.ratio * 100)}
@@ -76,7 +86,14 @@
         <PaletteList compact />
       </div>
       <div class="mpane" style:flex-grow={1 - layout.mobile.ratio}>
-        <Pane panel={layout.mobile.bottom} onchange={(k) => layout.setMobilePanel('bottom', k)} />
+        <Pane
+          tabs={layout.mobile.bottom.tabs}
+          active={layout.mobile.bottom.active}
+          locked={layout.locked}
+          onselect={(i) => layout.selectMobileTab('bottom', i)}
+          onadd={(k) => layout.addMobileTab('bottom', k)}
+          onclosetab={(i) => layout.closeMobileTab('bottom', i)}
+        />
       </div>
     </main>
   {/if}
@@ -91,5 +108,8 @@
   .strip { flex: none; background: var(--ui-panel); border-block: 1px solid var(--ui-border); padding: 0 8px 6px; }
   .grip { height: 18px; display: grid; place-items: center; cursor: row-resize; touch-action: none; outline: none; }
   .grip span { width: 44px; height: 4px; border-radius: 2px; background: var(--ui-border); }
-  .grip:hover span, .grip:focus-visible span { background: var(--ui-focus); }
+  .grip:not(.locked):hover span, .grip:focus-visible span { background: var(--ui-focus); }
+  /* Locked: no handle, just a little breathing room above the chips. */
+  .grip.locked { height: 6px; cursor: default; }
+  .grip.locked span { display: none; }
 </style>
