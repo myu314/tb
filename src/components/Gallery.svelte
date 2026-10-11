@@ -5,11 +5,8 @@
   import { previewVars } from '../lib/preview';
   import { app } from '../lib/state.svelte';
   import Modal from './Modal.svelte';
-  import CodePreview from './previews/CodePreview.svelte';
-  import FilerPreview from './previews/FilerPreview.svelte';
-  import MarkdownPreview from './previews/MarkdownPreview.svelte';
-  import TerminalPreview from './previews/TerminalPreview.svelte';
-  import TrackerPreview from './previews/TrackerPreview.svelte';
+  import { samples } from '../lib/samples.svelte';
+  import SampleBody from './previews/SampleBody.svelte';
 
   interface Props { onclose: () => void; }
   let { onclose }: Props = $props();
@@ -22,8 +19,7 @@
   let variant = $state<'all' | 'dark' | 'light'>('all');
   let system = $state<'all' | 'base16' | 'base24'>('all');
   let picked = $state<SchemeEntry | null>(null);
-  type Sample = 'code' | 'markdown' | 'terminal' | 'tracker' | 'filer';
-  let sample = $state<Sample>('code');
+  let sample = $state('code');
 
   const sorted = $derived(
     data ? [...data.schemes].sort((a, b) => a.name.localeCompare(b.name) || a.system.localeCompare(b.system)) : [],
@@ -103,13 +99,12 @@
           {#each ['code', 'markdown', 'terminal', 'tracker', 'filer'] as const as s}
             <button class:on={sample === s} onclick={() => (sample = s)}>{t(s)}</button>
           {/each}
+          {#each samples.list as c (c.id)}
+            <button class:on={sample === `custom:${c.id}`} onclick={() => (sample = `custom:${c.id}`)}><i>{c.name}</i></button>
+          {/each}
         </div>
         <div class="pv" style={previewVars(pickedTheme)}>
-          {#if sample === 'code'}<CodePreview />
-          {:else if sample === 'markdown'}<MarkdownPreview />
-          {:else if sample === 'terminal'}<TerminalPreview />
-          {:else if sample === 'tracker'}<TrackerPreview />
-          {:else}<FilerPreview />{/if}
+          <SampleBody {sample} />
         </div>
       {:else}
         <p class="muted small empty">{error || t('pickScheme')}</p>

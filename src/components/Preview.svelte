@@ -5,17 +5,21 @@
   import { previewVars } from '../lib/preview';
   import { BRIGHT_OF, effectivePalette, ROLES, shortName, type Slot, type System } from '../lib/scheme';
   import { app } from '../lib/state.svelte';
-  import CodePreview from './previews/CodePreview.svelte';
-  import FilerPreview from './previews/FilerPreview.svelte';
-  import MarkdownPreview from './previews/MarkdownPreview.svelte';
-  import TerminalPreview from './previews/TerminalPreview.svelte';
-  import TrackerPreview from './previews/TrackerPreview.svelte';
+  import { samples } from '../lib/samples.svelte';
+  import SampleBody from './previews/SampleBody.svelte';
+  import SampleEditor from './SampleEditor.svelte';
 
-  type Sample = 'code' | 'markdown' | 'terminal' | 'tracker' | 'filer';
-  const SAMPLES: Sample[] = ['code', 'markdown', 'terminal', 'tracker', 'filer'];
+  const BUILT_IN = ['code', 'markdown', 'terminal', 'tracker', 'filer'] as const;
 
   const read = (k: string, d: string) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
-  let sample = $state<Sample>(read('theme-bench:sample', 'code') as Sample);
+  /** A built-in sample name, or "custom:<id>". */
+  let sample = $state(read('theme-bench:sample', 'code'));
+  // Fall back when the selected custom sample was deleted (here or in another tab).
+  $effect(() => {
+    if (sample.startsWith('custom:') && !samples.get(sample.slice(7))) sample = 'code';
+  });
+  const customId = $derived(sample.startsWith('custom:') ? sample.slice(7) : null);
+  let editing = $state<{ id?: string } | null>(null);
   let highlight = $state(read('theme-bench:hl', '1') === '1');
   $effect(() => {
     try {
@@ -45,29 +49,32 @@
     }
     return null;
   };
-  function inspect(target: EventTarget | null, pane: Pane): { fg: Slot; bg: Slot; pane: Pane } | null {
-    let el = target instanceof Element ? target : null;
+  // composedPath() reaches into custom samples' shadow roots, where e.target is just the host.
+  const pathOf = (e: Event) => e.composedPath().filter((n): n is Element => n instanceof Element);
+
+  function inspect(e: Event, pane: Pane): { fg: Slot; bg: Slot; pane: Pane } | null {
     let fg: Slot | null = null, bg: Slot | null = null;
-    while (el && !el.classList.contains('pv')) {
+    for (const el of pathOf(e)) {
+      if (el.classList.contains('pv') && el.hasAttribute('style')) break; // the outer preview
       fg ??= slotFromClass(el, 'f');
       bg ??= slotFromClass(el, 'b');
       if (fg && bg) break;
-      el = el.parentElement;
     }
     if (!fg && !bg) return null;
     return { fg: fg ?? 'base05', bg: bg ?? 'base00', pane };
   }
 
   function onMove(e: PointerEvent, pane: Pane) {
-    if (e.pointerType === 'mouse') info = inspect(e.target, pane);
+    if (e.pointerType === 'mouse') info = inspect(e, pane);
   }
   function onClick(e: MouseEvent, pane: Pane) {
-    if ((e.target as Element).closest('button, a')) return;
-    const r = inspect(e.target, pane);
+    const target = pathOf(e)[0];
+    if (!target || target.closest('button, a')) return;
+    const r = inspect(e, pane);
     if (!r) return;
     info = r;
     // Tapping on the text picks its color; tapping on bare background picks the background.
-    const hasText = (e.target as Element).childNodes.length > 0 && (e.target as Element).textContent?.trim();
+    const hasText = target.childNodes.length > 0 && target.textContent?.trim();
     app.selected = editable(hasText ? r.fg : r.bg, app.theme.system);
   }
 
@@ -93,10 +100,26 @@
 
 <section class="preview">
   <div class="tabs" role="tablist">
-    {#each SAMPLES as s}
+    {#each BUILT_IN as s}
       <button class:on={sample === s} role="tab" aria-selected={sample === s} onclick={() => (sample = s)}>{t(s as Key)}</button>
     {/each}
+    {#each samples.list as c (c.id)}
+      {@const key = `custom:${c.id}`}
+      <button class:on={sample === key} class="custom" role="tab" aria-selected={sample === key} onclick={() => (sample = key)}>{c.name}</button>
+    {/each}
+    {#if customId}
+      <button class="tool" onclick={() => (editing = { id: customId })} title={t('editSample')} aria-label={t('editSample')}>✎</button>
+    {/if}
+    <button class="tool" onclick={() => (editing = {})} title={t('newSample')} aria-label={t('newSample')}>＋</button>
   </div>
+  {#if editing}
+    <SampleEditor
+      id={editing.id}
+      onclose={() => (editing = null)}
+      onsaved={(id) => { sample = `custom:${id}`; editing = null; }}
+      ondeleted={() => { sample = 'code'; editing = null; }}
+    />
+  {/if}
 
   {#if app.reference}
     <div class="refbar small">
@@ -109,11 +132,7 @@
   {/if}
 
   {#snippet body()}
-    {#if sample === 'code'}<CodePreview />
-    {:else if sample === 'markdown'}<MarkdownPreview />
-    {:else if sample === 'terminal'}<TerminalPreview />
-    {:else if sample === 'tracker'}<TrackerPreview />
-    {:else}<FilerPreview />{/if}
+    <SampleBody {sample} hl={highlight ? shortName(app.selected) : null} />
   {/snippet}
 
   <div class="panes" class:split={showRef}>
@@ -173,6 +192,9 @@
   .tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; flex: none; align-items: center; }
   .tabs button { border: 0; background: transparent; border-radius: 6px 6px 0 0; padding: 4px 10px; white-space: nowrap; color: var(--ui-muted); }
   .tabs button.on { background: var(--ui-panel-2); color: var(--ui-text); font-weight: 600; }
+  .tabs button.custom { font-style: italic; }
+  .tabs .tool { min-width: 28px; padding: 2px 6px; border-radius: 6px; }
+  .tabs .tool:hover { background: var(--ui-panel-2); color: var(--ui-text); }
   .hl { display: flex; align-items: center; gap: 4px; white-space: nowrap; padding-right: 8px; margin-right: 2px; border-right: 1px solid var(--ui-border); color: var(--ui-muted); }
   .refbar { display: flex; gap: 6px; align-items: center; padding: 2px 4px 4px; white-space: nowrap; overflow: hidden; flex: none; }
   .cmp { display: flex; gap: 4px; align-items: center; padding-right: 8px; border-right: 1px solid var(--ui-border); }
